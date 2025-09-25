@@ -34,48 +34,56 @@ namespace FourZug.Backend.HeuristicsEngineAccess
         }
 
         // Return the game winner
-        public char BoardWinner(char[,] grid, char lastMoveBy, int lastColMove)
+        // TODO: Add in empty overflow slots to prevent false positive wins
+        public char GetWinner(char[] grid, char lastMoveBy, byte lastColMove)
         {
             if (utilEngine == null) throw new MissingFieldException();
 
 
             // Get the row the last piece fell into
-            int lastRowMove = -1;
-            for (int row = grid.GetLength(1) - 1; row >= 0; row--)
+            const byte rowsPerCol = 6;
+            int lastPieceI = rowsPerCol * (lastColMove+1) - 1;
+
+            // Get where the piece fell into
+            while (grid[lastPieceI] != ' ')
             {
-                if (grid[lastColMove, row] != ' ')
-                {
-                    lastRowMove = row;
-                    break;
-                }
+                lastPieceI--;
             }
 
-            int piecePositionID = utilEngine.RowColumnToID(lastRowMove, lastColMove);
-
-            // Determines what to change ID by (+-) for checking each direction for connect 4
+            // Determines the scale changes in index to check for connect 4s
             // In order: Vertical, Diagonal (NE / SW), Horizontal, Diagonal (SE / NW)
-            int[] idChangeScales = { 1, 7, 6, 5 };
+            int[] indexChangeScales = { 1, 7, 6, 5 };
 
             // Run through each direction, checking for connect 4
-            for (int direc = 0; direc < idChangeScales.Length; direc++)
+            foreach (int direc in indexChangeScales)
             {
-                int connectedPieces = 0;
-                // Run through chain
-                for (int idDist = -3; idDist <= 3; idDist++)
+                int connectedPieces = 1;
+                
+                // Check positive direc
+                for (int dist = 1; dist <= 3; dist++)
                 {
-                    int pointedID = piecePositionID + idDist * idChangeScales[direc];
+                    int checkedIndex = lastPieceI + dist * direc;
 
-                    if (isValidID(piecePositionID, pointedID))
+                    if (checkedIndex <= 41 && isValidIndex(lastPieceI, checkedIndex))
                     {
-                        char pieceAtPosition = utilEngine.PieceAtPositionID(grid, pointedID);
-                        if (pieceAtPosition == lastMoveBy) connectedPieces++;
-                        else connectedPieces = 0;
-
-                        // Return that the last move owner is winner
-                        if (connectedPieces == 4) return lastMoveBy;
+                        if (grid[checkedIndex] == lastMoveBy) connectedPieces++;
+                        else break;
                     }
-                    else connectedPieces = 0;
                 }
+
+                // Check opposite direc
+                for (int dist = -1; dist >= -3; dist--)
+                {
+                    int checkedIndex = lastPieceI + dist * direc;
+
+                    if (checkedIndex >= 0 && isValidIndex)
+                    {
+                        if (grid[checkedIndex] == lastMoveBy) connectedPieces++;
+                        else break;
+                    }
+                }
+
+                if (connectedPieces >= 4) return lastMoveBy;
             }
 
             // If no player has won and no move left, game is a draw
@@ -127,16 +135,16 @@ namespace FourZug.Backend.HeuristicsEngineAccess
         // PRIVATE HELPER METHODS
 
         // Checks an ID of a grid is valid in a connect 4 chain
-        private bool isValidID(int positionID, int pointedID)
+        private bool isValidIndex(int newPieceI, int pointedI)
         {
-            // Handles invalid IDs
-            if (pointedID < 0 || pointedID > 41) return false;
+            // Handles invalid index
+            if (pointedI < 0 || pointedI > 41) return false;
 
-            int posCol = positionID / 6, posRow = positionID % 6;
-            int pointCol = pointedID / 6, pointRow = pointedID % 6;
-            int colDist = Math.Abs(posCol - pointCol), rowDist = Math.Abs(posRow - pointRow);
+            int posCol = newPieceI / 6, posRow = newPieceI % 6;
+            int pointedCol = pointedI / 6, pointedRow = pointedI % 6;
+            int colDist = Math.Abs(posCol - pointedCol), rowDist = Math.Abs(posRow - pointedRow);
 
-            // Checks for diagonal 1 to 1
+            // Checks for diagonal 1 to 1 gradient
             if (colDist != 0 && rowDist != 0)
             {
                 if (colDist != rowDist) return false;

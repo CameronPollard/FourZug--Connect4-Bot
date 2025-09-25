@@ -4,7 +4,7 @@
     public class Node
     {
         // Represents grid AFTER the {lastColMove} move
-        public char[,] grid;
+        public char[] grid;
 
         // Represents who makes the next move (who's turn it is)
         public char nextMoveBy;
@@ -18,7 +18,9 @@
         // Tracks the next row a piece falls into for each col
         public int[] availableColRows;
 
-        public Node(char[,] grid, char currentTurn, int[] availableColRows, sbyte lastColMove=-1)
+
+        // TODO: Make node singleton
+        public Node(char[] grid, char currentTurn, int[] availableColRows, sbyte lastColMove=-1)
         {
             this.grid = grid;
             this.nextMoveBy = currentTurn;
