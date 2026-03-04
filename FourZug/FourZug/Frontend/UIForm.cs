@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Text;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FourZug.APIAccess;
+using FourZug.Bot_API;
 
 
-namespace FourZug.Frontend.Forms
+namespace FourZug.Frontend
 {
     // Bot misses a win in 1, in specific cases - simplifying BoardEvaluator.GridStateAsString should be a simple solution
     // Fix CA1416 warnings
@@ -25,8 +26,7 @@ namespace FourZug.Frontend.Forms
         private Panel[,]? boardPanels;
 
         // A reference to the API. Also loads the backend references
-        private readonly API FourZugAPI = new();
-
+        private readonly API API = new API();
 
 
         // Gets called as part of the initialization process by AppInit.cs
@@ -143,7 +143,7 @@ namespace FourZug.Frontend.Forms
             int col = (int)tag;
 
             // Check if column is valid
-            List<int> validCols = FourZugAPI.GetValidMoves(grid);
+            List<int> validCols = API.GetValidMoves(grid);
             if (!validCols.Contains(col)) return;
 
             // User makes move and switches turn
@@ -152,10 +152,10 @@ namespace FourZug.Frontend.Forms
             this.playersTurn = false;
 
             // Bot makes move
-            int botCol = FourZugAPI.BestMove(grid, 'O');
+            int botCol = API.BestMove(grid, 'O');
             MakeBoardMove(botCol, 'O');
             this.playersTurn = true;
-            
+
         }
 
         // Makes a move on the board, and returns if the game ended
@@ -164,15 +164,15 @@ namespace FourZug.Frontend.Forms
             if (grid == null) return;
 
             // Make move and display
-            this.grid = FourZugAPI.MakeMove(grid, turn, col);
+            var winnerAndGrid = API.MakeMove(grid, turn, col);
+            this.grid = winnerAndGrid.grid;
             DisplayBoard(grid);
 
             // Handle the board state after making move
-            char gameWinner = FourZugAPI.GetGameWinner(grid, turn, col);
-            if (gameWinner != '?')
+            if (winnerAndGrid.winner != '?')
             {
                 // End the game
-                EndGame(gameWinner);
+                EndGame(winnerAndGrid.winner);
             }
         }
 
@@ -180,23 +180,22 @@ namespace FourZug.Frontend.Forms
         private void EndGame(char gameWinner)
         {
             // Displays the results of game
-            if (gameWinner == 'D')
+            switch(gameWinner)
             {
-                txtGameResult.Text = "Draw";
-                this.BackColor = Color.Orange;
-            }
-            else if (gameWinner == 'X')
-            {
-                txtGameResult.Text = "You win!";
-                this.BackColor = Color.Blue;
+                case 'D':
+                    txtGameResult.Text = "Draw";
+                    this.BackColor = Color.Orange;
+                    break;
+                case 'X':
+                    txtGameResult.Text = "You win!";
+                    this.BackColor = Color.Blue;
+                    break;
+                case 'O':
+                    txtGameResult.Text = "Bot wins!";
+                    this.BackColor = Color.Red;
+                    break;
 
             }
-            else if (gameWinner == 'O')
-            {
-                txtGameResult.Text = "Bot wins!";
-                this.BackColor = Color.Red;
-            }
-
             this.gameEnded = true;
         }
     }

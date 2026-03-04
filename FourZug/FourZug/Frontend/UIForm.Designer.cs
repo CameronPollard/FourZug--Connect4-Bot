@@ -1,4 +1,4 @@
-﻿namespace FourZug.Frontend.Forms
+﻿namespace FourZug.Frontend
 {
     partial class UIForm
     {

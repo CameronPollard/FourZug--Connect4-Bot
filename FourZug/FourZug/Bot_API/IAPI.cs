@@ -1,12 +1,9 @@
-﻿namespace FourZug.APIAccess
+﻿using FourZug.Backend.Adapter;
+
+namespace FourZug.Bot_API
 {
-    // Provides a Backend interface for the frontend
     public interface IAPI
-    {
-        // Implementations must have a constructor
-        // This constructor does dependency injection 
-
-
+    { 
         /*
          * Returns the best move given a game grid/board
          * @pre:
@@ -26,9 +23,9 @@
          *      @param - col, column user selected
          * @post:
          *      @modify - Makes move change to grid
-         *      @return - Returns changed grid
+         *      @return - Returns changed grid and game winner
          */
-        char[,] MakeMove(char[,] grid, char turn, int col);
+        (char[,] grid, char winner) MakeMove(char[,] grid, char turn, int col);
 
 
         /*
@@ -39,17 +36,5 @@
          *      @return - Returns an int list of valid column moves
          */
         List<int> GetValidMoves(char[,] grid);
-
-
-        /*
-         * Returns state of the game given a grid/board
-         * @pre:
-         *      @param - grid, represents the game board
-         *      @param - turn, turn of current player
-         * @post:
-         *      @return - Char, representing game winner (if applicable)
-         *          Possiblities: 'X', 'O', 'D', '?'
-         */
-        char GetGameWinner(char[,] grid, char turn, int lastColMove);
     }
 }
