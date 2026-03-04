@@ -33,18 +33,13 @@ namespace FourZug.Backend.Adapter
         public override (char[,], char) makeMove(char[,] grid, char currentTurn, int colMove)
         {
             BitboardGame gameBoard = makeBoard(grid, currentTurn);
-            Console.WriteLine("Board made");
 
-            if (this.botUtility != null)
-            {   
-                this.botUtility.makeMove((byte)colMove, gameBoard);
-                char winner = this.botUtility.winnerFromMove(gameBoard);
+            if (this.botUtility == null) return (grid, 'E');
 
-                char[,] gridBoard = bitboardsToGrid(gameBoard.xBitboard, gameBoard.oBitboard);
-                return (gridBoard, winner);
-                
-            }
-            return (grid, 'E');
+            this.botUtility.makeMove((byte)colMove, gameBoard);
+            char winner = this.botUtility.winnerFromMove(gameBoard);
+            char[,] gridBoard = bitboardsToGrid(gameBoard.xBitboard, gameBoard.oBitboard);
+            return (gridBoard, winner);
         }
 
         private BitboardGame makeBoard(char[,] grid, char currentTurn='X')
@@ -89,19 +84,12 @@ namespace FourZug.Backend.Adapter
             {
                 for (int r = 0; r < rows; r++)
                 {
-                    switch (grid[c, r])
-                    {
-                        case 'X':
-                            xBitboard |= (1UL << bitPos);
-                            break;
-                        case 'O':
-                            oBitboard |= (1UL << bitPos);
-                            break;
-                    }
+                    if (grid[c, r] == 'X') xBitboard |= (1UL << bitPos);
+                    else if (grid[c, r] == 'O') oBitboard |= (1UL << bitPos);
                     bitPos += 1;
                 }
                 // There's no piece to be added at the padpoint
-                // This is what adds the vertical top padding
+                // This is what adds the vertical top padding to the bitboards
                 if (padPoints.Contains(bitPos)) bitPos += 1;
             }
 
@@ -114,7 +102,6 @@ namespace FourZug.Backend.Adapter
             byte bitNum = 0;
             byte row = 0, col = 0;
             char[,] gridRes = new char[7, 6];
-
 
             while (xBitboard != 0 || oBitboard != 0)
             {
@@ -132,12 +119,10 @@ namespace FourZug.Backend.Adapter
                     // Move to next col
                     col += 1;
                 }
-                // At this point the rest would be padding, so stop copying
                 else
                 {
                     row += 1;
                     col = 0;
-                    if (bitNum == padPoints.Max()) break;
                 }
 
                 // Move to next piece 

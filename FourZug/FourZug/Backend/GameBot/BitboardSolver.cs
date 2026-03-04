@@ -10,7 +10,7 @@ namespace FourZug.Backend.GameBot
         private IBotHeuristics? heuristicsEngine;
         private IBotUtility? utilityEngine;
 
-        private const byte maxDepth = 11;
+        private const byte maxDepth = 10;
 
 
         // INTERFACE CONTRACTS
@@ -38,15 +38,12 @@ namespace FourZug.Backend.GameBot
 
             sbyte bestCol = -1;
             short alpha = short.MinValue, beta = short.MaxValue;
+
             foreach (byte validCol in validMoves)
             {
                 // Get child board
                 this.utilityEngine.makeMove(validCol, gameBoard);
                 this.heuristicsEngine.updateEval(gameBoard, true);
-
-                // Check for any current Win In 1s. Depth 1 can only return seen wins.
-                var boardSummary = heuristicsEngine.evaluateBoard(gameBoard);
-                if (boardSummary.endsGame) return (sbyte)validCol;
 
                 // Start search
                 short reward = Minimax(1, alpha, beta, gameBoard);
@@ -92,19 +89,15 @@ namespace FourZug.Backend.GameBot
                 {
                     // Do move to board, creating child
                     this.utilityEngine.makeMove(childCol, gameBoard);
+                    this.heuristicsEngine.updateEval(gameBoard, true);
 
                     short reward = Minimax(currentDepth + 1, alpha, beta, gameBoard);
-                    switch (isMaximizing)
-                    {
-                        case true:
-                            alpha = Math.Max(alpha, reward);
-                            break;
-                        case false:
-                            beta = Math.Min(beta, reward);
-                            break;
-                    }
+
+                    if (isMaximizing) alpha = Math.Max(alpha, reward);
+                    else beta = Math.Min(beta, reward);
 
                     // Undo node move to recycle it, returning to parent
+                    this.heuristicsEngine.updateEval(gameBoard, false);
                     this.utilityEngine.undoPrevMove(gameBoard);
                 }
             }

@@ -49,6 +49,7 @@ namespace FourZug.Bot_API
         public (char[,] grid, char winner) MakeMove(char[,] grid, char turn, int col)
         {
             if (this.backend.accessAdapter == null) return (new char[1,1], 'E');
+
             return this.backend.accessAdapter.makeMove(grid, turn, col);
         }
 

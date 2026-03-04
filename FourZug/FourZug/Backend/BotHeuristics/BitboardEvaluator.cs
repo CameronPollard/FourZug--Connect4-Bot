@@ -21,6 +21,8 @@ internal class BitboardEvaluator : IBotHeuristics
     public void refreshPlacementEval(BitboardGame gameBoard)
     {
         short placementEval = 0;
+        // Get the placement for each piece placement
+        // Bitboard padding is always empty, making no impact
         for (byte i = 0; i < 64; i++)
         {
             bool xPiece = (gameBoard.xBitboard & (1UL << i)) != 0;
@@ -40,7 +42,6 @@ internal class BitboardEvaluator : IBotHeuristics
     public void updateEval(BitboardGame gameBoard, bool afterNewMove)
     {
         if (this.utilEngine == null) throw new MissingFieldException();
-
 
         int lastMoveCol = gameBoard.moveHistory.Peek();
         int bitPos = gameBoard.colHeights[lastMoveCol] - 1;
