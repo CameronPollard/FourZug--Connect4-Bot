@@ -37,15 +37,23 @@ internal class BitboardEvaluator : IBotHeuristics
         gameBoard.placementEval = placementEval;
     }
 
-    public void updateEvalAfterMove(BitboardGame gameBoard)
+    public void updateEval(BitboardGame gameBoard, bool afterNewMove)
     {
         if (this.utilEngine == null) throw new MissingFieldException();
 
-        byte lastMove = gameBoard.moveHistory.Peek();
 
-        int row = gameBoard.colHeights[lastMove] - 1;
-        byte relatedBit = this.utilEngine.getBitFromCoord(row, lastMove);
-        gameBoard.placementEval += EvalPlacement(relatedBit, !gameBoard.playerXTurn);
+        int lastMoveCol = gameBoard.moveHistory.Peek();
+        int bitPos = gameBoard.colHeights[lastMoveCol] - 1;
+        bool isXPiece = !gameBoard.playerXTurn;
+
+        if (afterNewMove)
+        {
+            gameBoard.placementEval += EvalPlacement(bitPos, isXPiece);
+        }
+        else // Updating the eval after undoing a move
+        {
+            gameBoard.placementEval -= EvalPlacement(bitPos, isXPiece);
+        }
     }
 
     public (bool endsGame, short boardEval) evaluateBoard(BitboardGame gameBoard)
@@ -59,8 +67,8 @@ internal class BitboardEvaluator : IBotHeuristics
         return (true, evalWinner(lastMoveBy, winner));
     }
 
-    // Returns piece placement value gain of a slot
-    private sbyte EvalPlacement(byte bitPos, bool isXPiece)
+    // Updates the piece placement using the last placed piece location
+    private sbyte EvalPlacement(int bitPos, bool isXPiece)
     {
         // Represents the points gained from positions taken
         // Viewing from side would correlate visually to game board and help understand array access

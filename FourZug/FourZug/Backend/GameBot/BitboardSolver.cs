@@ -41,7 +41,7 @@ namespace FourZug.Backend.GameBot
             {
                 // Get child board
                 this.utilityEngine.makeMove(validCol, gameBoard);
-                this.heuristicsEngine.refreshPlacementEval(gameBoard);
+                this.heuristicsEngine.updateEval(gameBoard, true);
 
                 // Check for any current Win In 1s. Depth 1 can only return seen wins.
                 var boardSummary = heuristicsEngine.evaluateBoard(gameBoard);
@@ -51,8 +51,8 @@ namespace FourZug.Backend.GameBot
                 short reward = Minimax(1, !isMaximizing, gameBoard);
 
                 // Undo move, returning to the root
+                this.heuristicsEngine.updateEval(gameBoard, false);
                 this.utilityEngine.undoPrevMove(gameBoard);
-                this.heuristicsEngine.refreshPlacementEval(gameBoard);
 
                 // Don't save reward if it isn't a new PB
                 if (isMaximizing && reward <= bestReward) continue;

@@ -10,8 +10,10 @@ namespace FourZug.Backend.BotHeuristics
         // Creates and saves interface references of component
         void InitComponentReferences(IBotUtility utilityEngine);
 
-        void refreshPlacementEval(BitboardGame nodeBoard);
+        void refreshPlacementEval(BitboardGame gameBoard);
 
-        (bool endsGame, short boardEval) evaluateBoard(BitboardGame nodeBoard);
+        (bool endsGame, short boardEval) evaluateBoard(BitboardGame gameBoard);
+
+        void updateEval(BitboardGame gameBoard, bool afterMove);
     }
 }
