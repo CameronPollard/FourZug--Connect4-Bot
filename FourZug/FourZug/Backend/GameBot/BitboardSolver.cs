@@ -10,7 +10,7 @@ namespace FourZug.Backend.GameBot
         private IBotHeuristics? heuristicsEngine;
         private IBotUtility? utilityEngine;
 
-        private const byte maxDepth = 8;
+        private const byte maxDepth = 11;
 
 
         // INTERFACE CONTRACTS
@@ -37,6 +37,7 @@ namespace FourZug.Backend.GameBot
             if (validMoves.Count == 0) return -1;
 
             sbyte bestCol = -1;
+            short alpha = short.MinValue, beta = short.MaxValue;
             foreach (byte validCol in validMoves)
             {
                 // Get child board
@@ -48,7 +49,7 @@ namespace FourZug.Backend.GameBot
                 if (boardSummary.endsGame) return (sbyte)validCol;
 
                 // Start search
-                short reward = Minimax(1, !isMaximizing, gameBoard);
+                short reward = Minimax(1, alpha, beta, gameBoard);
 
                 // Undo move, returning to the root
                 this.heuristicsEngine.updateEval(gameBoard, false);
@@ -70,34 +71,45 @@ namespace FourZug.Backend.GameBot
         // PRIVATE HELPER METHODS
 
         // Runs the minimax tree searching logic
-        private short Minimax(int currentDepth, bool isMaximizing, BitboardGame gameBoard)
+        private short Minimax(int currentDepth, short alpha, short beta, BitboardGame gameBoard)
         {
             if (utilityEngine == null || heuristicsEngine == null) throw new MissingFieldException();
+            bool isMaximizing = gameBoard.playerXTurn;
 
             // Return value of node ends game or is a leaf
-            var nodeSummary = this.heuristicsEngine.evaluateBoard(gameBoard);
-            if (nodeSummary.endsGame || currentDepth == maxDepth) return nodeSummary.boardEval;
+            var boardSummary = this.heuristicsEngine.evaluateBoard(gameBoard);
+            if (boardSummary.endsGame || currentDepth == maxDepth)
+            {
+                return boardSummary.boardEval;
+            }
 
-            short bestReward = isMaximizing ? short.MinValue : short.MaxValue;
             List<byte> childCols = this.utilityEngine.getValidMoves(gameBoard);
 
             foreach (byte childCol in childCols)
             {
-                // Do move to board, creating child
-                this.utilityEngine.makeMove(childCol, gameBoard);
+                // Get best reward from deeper searches, do AB pruning here
+                if (alpha < beta)
+                {
+                    // Do move to board, creating child
+                    this.utilityEngine.makeMove(childCol, gameBoard);
 
-                // Get best reward from deeper searches
-                short reward = Minimax(currentDepth + 1, !isMaximizing, gameBoard);
+                    short reward = Minimax(currentDepth + 1, alpha, beta, gameBoard);
+                    switch (isMaximizing)
+                    {
+                        case true:
+                            alpha = Math.Max(alpha, reward);
+                            break;
+                        case false:
+                            beta = Math.Min(beta, reward);
+                            break;
+                    }
 
-                // Undo node move to recycle it, returning to parent
-                this.utilityEngine.undoPrevMove(gameBoard);
-
-                // If reward is better than already seen
-                if (isMaximizing) bestReward = Math.Max(reward, bestReward);
-                if (!isMaximizing) bestReward = Math.Min(reward, bestReward);
+                    // Undo node move to recycle it, returning to parent
+                    this.utilityEngine.undoPrevMove(gameBoard);
+                }
             }
 
-            return bestReward;
+            return (isMaximizing ? alpha : beta);
         }
     }
 }
